@@ -1,20 +1,30 @@
-# Step 1: Use Node.js for building
-FROM node:20-alpine
+# Use Node.js 18 Alpine as base
+FROM node:18-alpine
 
 # Set working directory
 WORKDIR /app
+
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 # Copy package files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci --only=production
 
-# Copy all project files
+# Copy source code
 COPY . .
 
-# Expose the port
-EXPOSE 5173
+# Build the application
+RUN npm run build
 
-# Start the app
-CMD ["npm", "run", "dev", "--", "--host"]
+# Expose port 3000
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Start the server
+CMD ["npm", "start"]

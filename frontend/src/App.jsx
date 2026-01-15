@@ -10,6 +10,7 @@ const FAUCET_ABI = [
   "function requestTokens()",
   "function canClaim(address) view returns (bool)",
   "function remainingAllowance(address) view returns (uint256)",
+  "function lastClaimAt(address) view returns (uint256)",
   "function COOLDOWN_TIME() view returns (uint256)"
 ];
 
@@ -114,6 +115,7 @@ function App() {
   const [canClaim, setCanClaim] = useState(false);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState({ msg: "", color: "" });
+  const [timeUntilClaim, setTimeUntilClaim] = useState(0);
 
   const TOKEN_ADDR = import.meta.env.VITE_TOKEN_ADDRESS;
   const FAUCET_ADDR = import.meta.env.VITE_FAUCET_ADDRESS;
@@ -138,6 +140,18 @@ function App() {
     const bal = await token.balanceOf(address);
     const allow = await faucet.remainingAllowance(address);
     const claimable = await faucet.canClaim(address);
+    const lastClaim = await faucet.lastClaimAt(address);
+
+    // Calculate time until next claim
+    if (lastClaim > 0) {
+      const cooldownTime = 24 * 60 * 60; // 24 hours in seconds
+      const nextClaimTime = Number(lastClaim) + cooldownTime;
+      const now = Math.floor(Date.now() / 1000);
+      const timeRemaining = Math.max(0, nextClaimTime - now);
+      setTimeUntilClaim(timeRemaining);
+    } else {
+      setTimeUntilClaim(0);
+    }
 
     setBalance(ethers.formatEther(bal));
     setAllowance(ethers.formatEther(allow));
@@ -172,8 +186,8 @@ function App() {
         <p style={styles.subtitle}>Secure Blockchain Token Distribution</p>
 
         {!account ? (
-          <button 
-            onClick={connectWallet} 
+          <button
+            onClick={connectWallet}
             style={styles.button}
             onMouseOver={(e) => e.target.style.opacity = "0.8"}
             onMouseOut={(e) => e.target.style.opacity = "1"}
@@ -192,13 +206,19 @@ function App() {
                 <div style={styles.statValue}>{parseFloat(balance).toFixed(2)} STT</div>
               </div>
               <div style={styles.statBox}>
-                <div style={styles.statLabel}>Limit</div>
+                <div style={styles.statLabel}>Remaining</div>
                 <div style={styles.statValue}>{parseFloat(allowance).toFixed(2)} STT</div>
               </div>
             </div>
 
-            <button 
-              onClick={handleClaim} 
+            {timeUntilClaim > 0 && (
+              <div style={{ ...styles.walletInfo, marginBottom: "20px", backgroundColor: "#1a1a1a" }}>
+                ⏱️ Next claim in: {Math.floor(timeUntilClaim / 3600)}h {Math.floor((timeUntilClaim % 3600) / 60)}m {timeUntilClaim % 60}s
+              </div>
+            )}
+
+            <button
+              onClick={handleClaim}
               disabled={loading || !canClaim}
               style={{
                 ...styles.button,
@@ -218,6 +238,141 @@ function App() {
       </div>
     </div>
   );
+}
+
+// --- EVALUATION INTERFACE ---
+// Expose functions for automated evaluation
+if (typeof window !== 'undefined') {
+  window.__EVAL__ = {
+    /**
+     * Connect wallet and return connected address
+     * @returns {Promise<string>} Connected Ethereum address
+     */
+    connectWallet: async () => {
+      try {
+        if (!window.ethereum) throw new Error("MetaMask not installed");
+
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.send("eth_requestAccounts", []);
+
+        if (!accounts || accounts.length === 0) {
+          throw new Error("No accounts found");
+        }
+
+        return accounts[0];
+      } catch (error) {
+        throw new Error(`Wallet connection failed: ${error.message}`);
+      }
+    },
+
+    /**
+     * Get the deployed token contract address
+     * @returns {string} Token contract address
+     */
+    getTokenAddress: () => {
+      return import.meta.env.VITE_TOKEN_ADDRESS || "";
+    },
+
+    /**
+     * Get the deployed faucet contract address
+     * @returns {string} Faucet contract address
+     */
+    getFaucetAddress: () => {
+      return import.meta.env.VITE_FAUCET_ADDRESS || "";
+    },
+
+    /**
+     * Get contract addresses
+     * @returns {Promise<object>} Object with token and faucet addresses
+     */
+    getContractAddresses: async () => {
+      return {
+        token: import.meta.env.VITE_TOKEN_ADDRESS || "",
+        faucet: import.meta.env.VITE_FAUCET_ADDRESS || ""
+      };
+    },
+
+    /**
+     * Request tokens for the connected wallet
+     * @returns {Promise<string>} Transaction hash
+     */
+    requestTokens: async () => {
+      try {
+        if (!window.ethereum) throw new Error("MetaMask not installed");
+
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const faucetAddr = import.meta.env.VITE_FAUCET_ADDRESS;
+        const faucet = new ethers.Contract(faucetAddr, FAUCET_ABI, signer);
+
+        const tx = await faucet.requestTokens();
+        const receipt = await tx.wait();
+
+        return receipt.hash;
+      } catch (error) {
+        throw new Error(`Token request failed: ${error.message}`);
+      }
+    },
+
+    /**
+     * Get token balance for a specific address
+     * @param {string} address - Ethereum address to check
+     * @returns {Promise<string>} Token balance as string (in base units)
+     */
+    getBalance: async (address) => {
+      try {
+        if (!window.ethereum) throw new Error("MetaMask not installed");
+
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const tokenAddr = import.meta.env.VITE_TOKEN_ADDRESS;
+        const token = new ethers.Contract(tokenAddr, TOKEN_ABI, provider);
+
+        const balance = await token.balanceOf(address);
+        return balance.toString();
+      } catch (error) {
+        throw new Error(`Failed to get balance: ${error.message}`);
+      }
+    },
+
+    /**
+     * Check if an address can claim tokens
+     * @param {string} address - Ethereum address to check
+     * @returns {Promise<boolean>} True if can claim, false otherwise
+     */
+    canClaim: async (address) => {
+      try {
+        if (!window.ethereum) throw new Error("MetaMask not installed");
+
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const faucetAddr = import.meta.env.VITE_FAUCET_ADDRESS;
+        const faucet = new ethers.Contract(faucetAddr, FAUCET_ABI, provider);
+
+        return await faucet.canClaim(address);
+      } catch (error) {
+        throw new Error(`Failed to check claim status: ${error.message}`);
+      }
+    },
+
+    /**
+     * Get remaining allowance for an address
+     * @param {string} address - Ethereum address to check
+     * @returns {Promise<string>} Remaining allowance as string (in base units)
+     */
+    getRemainingAllowance: async (address) => {
+      try {
+        if (!window.ethereum) throw new Error("MetaMask not installed");
+
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const faucetAddr = import.meta.env.VITE_FAUCET_ADDRESS;
+        const faucet = new ethers.Contract(faucetAddr, FAUCET_ABI, provider);
+
+        const allowance = await faucet.remainingAllowance(address);
+        return allowance.toString();
+      } catch (error) {
+        throw new Error(`Failed to get remaining allowance: ${error.message}`);
+      }
+    },
+  };
 }
 
 export default App;
