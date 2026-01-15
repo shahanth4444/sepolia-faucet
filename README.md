@@ -181,17 +181,20 @@ graph LR
 
 ### Application Screenshots
 
-````carousel
-![Initial state - Connect wallet to begin](file:///d:/submission/screenshots/01-wallet-connect.png)
-<!-- slide -->
-![Connected state showing wallet address](file:///d:/submission/screenshots/02-connected-state.png)
-<!-- slide -->
-![Ready to claim with balance and remaining allowance displayed](file:///d:/submission/screenshots/03-claim-ready.png)
-<!-- slide -->
-![MetaMask transaction confirmation](file:///d:/submission/screenshots/04-metamask-transaction.png)
-<!-- slide -->
-![Transaction result with updated balance](file:///d:/submission/screenshots/05-transaction-result.png)
-````
+#### 1. Initial State - Connect Wallet
+![Connect wallet to begin](screenshots/01-wallet-connect.png)
+
+#### 2. Connected State
+![Connected state showing wallet address](screenshots/02-connected-state.png)
+
+#### 3. Ready to Claim
+![Ready to claim with balance and remaining allowance displayed](screenshots/03-claim-ready.png)
+
+#### 4. MetaMask Transaction
+![MetaMask transaction confirmation](screenshots/04-metamask-transaction.png)
+
+#### 5. Transaction Result
+![Transaction result with updated balance](screenshots/05-transaction-result.png)
 
 ### UI Features
 - 🎨 **Dark Theme** - Professional cyberpunk aesthetic
