@@ -454,19 +454,6 @@ sepolia-faucet/
 | TokenFaucet.sol | 92%+   |
 | **Overall**   | **93%+** |
 
-## 🤝 Contributing
-
-This is a submission project. For issues or suggestions, please contact the repository owner.
-
-## 📄 License
-
-MIT License - see LICENSE file for details.
-
-## 👤 Author
-
-**shahanth4444**
-- GitHub: [@shahanth4444](https://github.com/shahanth4444)
-- Repository: [sepolia-faucet](https://github.com/shahanth4444/sepolia-faucet)
 
 ## 🙏 Acknowledgments
 
@@ -476,5 +463,3 @@ MIT License - see LICENSE file for details.
 - React for frontend framework
 
 ---
-
-**Built with ❤️ for industrial-level blockchain development**
