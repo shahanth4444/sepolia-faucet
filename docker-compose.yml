@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Smart Contract Service
+  contracts:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: faucet-contracts
+    volumes:
+      - ./contracts:/app/contracts
+      - ./test:/app/test
+      - ./scripts:/app/scripts
+      - ./artifacts:/app/artifacts
+      - ./cache:/app/cache
+    environment:
+      - NODE_ENV=development
+    command: npm test
+    networks:
+      - faucet-network
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: faucet-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - contracts
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - faucet-network
+
+networks:
+  faucet-network:
+    driver: bridge
