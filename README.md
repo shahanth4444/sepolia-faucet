@@ -53,14 +53,14 @@ graph TB
     end
     
     subgraph "Frontend Layer"
-        UI[React UI<br/>Port 3000]
-        EVAL[window.__EVAL__<br/>Evaluation Interface]
-        Health[/health Endpoint]
+        UI["React UI<br/>Port 3000"]
+        EVAL["window.__EVAL__<br/>Evaluation Interface"]
+        Health["Health Endpoint"]
     end
     
     subgraph "Smart Contract Layer"
-        Token[MyToken ERC-20<br/>Max Supply: 1M]
-        Faucet[TokenFaucet<br/>10 STT per claim]
+        Token["MyToken ERC-20<br/>Max Supply: 1M"]
+        Faucet["TokenFaucet<br/>10 STT per claim"]
     end
     
     subgraph "Blockchain"
